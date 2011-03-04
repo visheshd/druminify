@@ -2,4 +2,4 @@ name = DruMinify
 description = "This module allows you to minify all your css and js using the PHP5 Minify project http://code.google.com/p/minify/. Developed by Vishesh Duggar at <a href="http://greenferretllc.com" title="GreenFerret LLC">GreenFerret LLC</a>" 
 core = 7.x 
 files[] = druminify.module 
-configure=admin/config/minify
+configure=admin/config/druminify/settings

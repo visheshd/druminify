@@ -1,5 +1,28 @@
 <?php
 
+/** 
+ * Implementation of hook_menu(). 
+ */ 
+function druminify_menu() { 
+  
+  $items['admin/config/druminify/settings'] = array( 
+    'title' => 'DruMinify settings', 
+    'description' => 'Configure things to minify and compress', 
+    'page callback' => 'drupal_get_form', 
+    'page arguments' => array('druminify_admin_settings'), 
+    'access arguments' => array('administer druminify configuration'), 
+    'type' => MENU_NORMAL_ITEM, 
+  ); 
+ 
+  return $items; 
+} 
+
+
+/**
+ * Implementing hook_js_alter
+ * @param $javascript
+ */
+
 function druminify_js_alter(&$javascript) {
   $sources_to_minify=array();
   _load_minify_library();
@@ -7,27 +30,85 @@ function druminify_js_alter(&$javascript) {
 	if(strpos($filename, ".js"))
 		$sources_to_minify[] = $filename;	
   }  
-//  dpm(Minify::combine($sources_to_minify));
   
 }
 
+/**
+ * Implementing hook_page_alter
+ * @param $page
+ */
+
 function druminify_page_alter(&$page) {
-	$page['#post_render'] = array("minify_page_callback");
+	$page['#post_render'] = array("druminify_page_callback");
 }
 
+/**
+ * Callback function for minifying post rendered HTML
+ * @param $page
+ */
 function druminify_page_callback(&$page){
+	if(!variable_get('druminify_html', 0)){
+		return;
+	}
+	
 	$options = array(
 		'content' => $page,
 		'quite' => true,
 		'id' => "343"
 	);
 	$content = Minify::serve("Page",$options);
-	kpr($content);
+} 
+
+
+/**
+ * Helper to load the Minify library using libraries api module
+ */
+function _load_minify_library(){
+	module_load_include('module', 'libraries', 'libraries');
+	$minify_path = DRUPAL_ROOT . "/" . libraries_get_path("minify",false);
+	set_include_path(get_include_path() . PATH_SEPARATOR . $minify_path . "/min/lib");
+	include_once $minify_path . "/min/lib/Minify.php";
 }
 
-function _load_minify_library(){
-  module_load_include('module', 'libraries', 'libraries');
-        $minify_path = DRUPAL_ROOT . "/" . libraries_get_path("minify",false);
-        set_include_path(get_include_path() . PATH_SEPARATOR . $minify_path . "/min/lib");
-        include_once $minify_path . "/min/lib/Minify.php";
+/**
+ * Settings form builder.
+ * @see system_settings_form().
+ */
+function druminify_admin_settings(){
+	$form['druminify_html'] = array(
+		'#type' => 'checkbox',
+		'#title' => t('Minify HTML post rendering'),
+		'#default_value' => variable_get('druminify_html', 0),
+	);
+	
+	$form['druminify_js'] = array(
+		'#type' => 'checkbox',
+		'#title' => t('Minify JavaScript files'),
+		'#default_value' => variable_get('druminify_js', 0),
+	);
+	
+	$form['druminify_css'] = array(
+		'#type' => 'checkbox',
+		'#title' => t('Minify CSS files'),
+		'#default_value' => variable_get('druminify_css', 0),
+	);
+	
+	$form['#submit'][] = 'druminify_admin_settings_submit'; 
+  	return system_settings_form($form);	
+} 
+
+/**
+ * Implementing settings form submission handler.
+ * @param $form
+ * @param $form_state
+ */
+function druminify_admin_settings_submit($form, &$form_state){
+		if(isset($form_state['values']['druminify_html']))
+			variable_set('druminify_html',$form_state['values']['druminify_html']);
+		
+		if(isset($form_state['values']['druminify_js']))
+			variable_set('druminify_html',$form_state['values']['druminify_js']);
+			
+		if(isset($form_state['values']['druminify_css']))
+			variable_set('druminify_html',$form_state['values']['druminify_css']);
 }

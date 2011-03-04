@@ -1,0 +1,5 @@
+Installation
+------------
+1. Download and extract the module in the modules directory.
+2. Download and extract PHP Minify library at /sites/all/libraries from http://code.google.com/p/minify/
+3. Enable the module.
