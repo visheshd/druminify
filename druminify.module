@@ -1,0 +1,33 @@
+<?php
+
+function druminify_js_alter(&$javascript) {
+  $sources_to_minify=array();
+  _load_minify_library();
+  foreach($javascript as $filename => $attr){
+	if(strpos($filename, ".js"))
+		$sources_to_minify[] = $filename;	
+  }  
+//  dpm(Minify::combine($sources_to_minify));
+  
+}
+
+function druminify_page_alter(&$page) {
+	$page['#post_render'] = array("minify_page_callback");
+}
+
+function druminify_page_callback(&$page){
+	$options = array(
+		'content' => $page,
+		'quite' => true,
+		'id' => "343"
+	);
+	$content = Minify::serve("Page",$options);
+	kpr($content);
+}
+
+function _load_minify_library(){
+  module_load_include('module', 'libraries', 'libraries');
+        $minify_path = DRUPAL_ROOT . "/" . libraries_get_path("minify",false);
+        set_include_path(get_include_path() . PATH_SEPARATOR . $minify_path . "/min/lib");
+        include_once $minify_path . "/min/lib/Minify.php";
+}
